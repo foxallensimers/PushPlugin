@@ -29,7 +29,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             if (pushChannel == null)
             {
                 pushChannel = new HttpNotificationChannel(this.pushOptions.ChannelName);
-				SubscribePushChannelEvents(pushChannel);
+
                 try
                 {
                     pushChannel.Open();
@@ -43,10 +43,8 @@ namespace WPCordovaClassLib.Cordova.Commands
                 pushChannel.BindToShellToast();
                 pushChannel.BindToShellTile();
             }
-			else {
-				SubscribePushChannelEvents(pushChannel);
-			}
-			
+
+            SubscribePushChannelEvents(pushChannel);
             var result = new RegisterResult
             {
                 ChannelName = this.pushOptions.ChannelName,
