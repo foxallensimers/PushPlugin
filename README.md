@@ -545,14 +545,15 @@ if(device.platform == "Win32NT"){
         channelHandler,
         errorHandler,
         {
-            "channelName": channelName,
-            "ecb": "onNotificationWP8",
-            "uccb": "channelHandler",
-            "errcb": "jsonErrorHandler"
+            "channelName": "channelName",
+            "ecb": onNotificationWP8,
+            "uccb": channelHandler,
+            "errcb": jsonErrorHandler
         });
 }
 
 ```
+Make sure that date and time settings are correct for your device/emulator before registering for push notifications.
 
 #### channelHandler (WP8 only)
 Called after a push notification channel is opened and push notification URI is returned. [The application is now set to receive notifications.](http://msdn.microsoft.com/en-us/library/windowsphone/develop/hh202940(v=vs.105).aspx)
