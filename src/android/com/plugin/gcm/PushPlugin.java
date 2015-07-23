@@ -2,6 +2,7 @@ package com.plugin.gcm;
 
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import com.google.android.gcm.GCMRegistrar;
@@ -25,6 +26,7 @@ public class PushPlugin extends CordovaPlugin {
 	public static final String REGISTER = "register";
 	public static final String UNREGISTER = "unregister";
 	public static final String EXIT = "exit";
+	public static final String LAUNCHPUSHPAGE = "openlandingPage";
 
 	private static CordovaWebView gWebView;
 	private static String gECB;
@@ -84,7 +86,34 @@ public class PushPlugin extends CordovaPlugin {
 			Log.v(TAG, "UNREGISTER");
 			result = true;
 			callbackContext.success();
-		} else {
+		} else if (LAUNCHPUSHPAGE.equals(action)) {
+
+			SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("PUSHDATA", Context.MODE_PRIVATE);
+			SharedPreferences.Editor editor = sharedPref.edit();
+			boolean isUrl = sharedPref.getBoolean("IsLandingURL", false);
+			String landingUrl = sharedPref.getString("LandingURL", "N/A");
+			result = true;
+			String dataToSend;
+			if(isUrl)
+				dataToSend = "true#saaksshi#"+landingUrl;
+			else 
+				dataToSend = "false#saaksshi#N/A";
+			
+			/*JSONArray jsonArr = new JSONArray();
+			JSONObject pnObj = new JSONObject();
+			try {
+				pnObj.put("IsLandingURL",isUrl);
+				pnObj.put("LandingURL",landingUrl);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			jsonArr.put(pnObj);*/
+			editor.putBoolean("IsLandingURL", false);
+			editor.putString("LandingURL", "N/A");
+			editor.commit();
+			callbackContext.success(dataToSend.toString());
+		}
+		else {
 			result = false;
 			Log.e(TAG, "Invalid action : " + action);
 			callbackContext.error("Invalid action : " + action);
