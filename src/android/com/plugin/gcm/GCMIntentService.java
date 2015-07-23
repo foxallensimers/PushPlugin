@@ -1,14 +1,20 @@
 package com.plugin.gcm;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -19,6 +25,7 @@ import com.google.android.gcm.GCMBaseIntentService;
 public class GCMIntentService extends GCMBaseIntentService {
 
 	private static final String TAG = "GCMIntentService";
+	private Context gContext;
 	
 	public GCMIntentService() {
 		super("GCMIntentService");
@@ -26,7 +33,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	@Override
 	public void onRegistered(Context context, String regId) {
-
+		gContext = context;
 		Log.v(TAG, "onRegistered: "+ regId);
 
 		JSONObject json;
@@ -54,7 +61,14 @@ public class GCMIntentService extends GCMBaseIntentService {
 	public void onUnregistered(Context context, String regId) {
 		Log.d(TAG, "onUnregistered - regId: " + regId);
 	}
+	public static void restartActivity(Activity act){
 
+        Intent intent=new Intent();
+        intent.setClass(act, act.getClass());
+        act.startActivity(intent);
+        act.finish();
+
+}
 	@Override
 	protected void onMessage(Context context, Intent intent) {
 		Log.d(TAG, "onMessage - context: " + context);
@@ -67,6 +81,11 @@ public class GCMIntentService extends GCMBaseIntentService {
             if (PushPlugin.isInForeground()) {
 				extras.putBoolean("foreground", true);
                 PushPlugin.sendExtras(extras);
+             // Send a notification if there is a message
+                if (extras.getString("message") != null && extras.getString("message").length() != 0) {
+                    createNotification(context, extras);
+                    //restartActivity(gC)
+                }
 			}
 			else {
 				extras.putBoolean("foreground", false);
@@ -78,13 +97,49 @@ public class GCMIntentService extends GCMBaseIntentService {
             }
         }
 	}
+	private Bitmap getBitmap(String src)
+    {
+		try {
+	        java.net.URL url = new java.net.URL(src);
+	        HttpURLConnection connection = (HttpURLConnection) url
+	                .openConnection();
+	        connection.setDoInput(true);
+	        connection.connect();
+	        InputStream input = connection.getInputStream();
+	        Bitmap myBitmap = BitmapFactory.decodeStream(input);
+	        return myBitmap;
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+    }
 
 	public void createNotification(Context context, Bundle extras)
 	{
+		SharedPreferences sharedPref = context.getSharedPreferences("PUSHDATA", Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPref.edit();
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		String appName = getAppName(this);
-
+		String message = extras.getString("message");
+		String largeIcon = extras.getString("largeIcon");
+		String landingPage = extras.getString("smallIcon");
+		
+		if(landingPage!=null){
+			editor.putBoolean("IsLandingURL", true);
+			editor.putString("LandingURL", landingPage);
+			editor.commit();
+		}else
+		{
+			editor.putString("LandingURL", null);
+			editor.putBoolean("IsLandingURL", false);
+			editor.commit();
+		}
+		 
 		Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
+		
+//		if(landingPage!=null)
+//			notificationIntent.putExtra("landingPage", landingPage);
+		
 		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.putExtra("pushBundle", extras);
 
@@ -104,17 +159,24 @@ public class GCMIntentService extends GCMBaseIntentService {
 				.setSmallIcon(context.getApplicationInfo().icon)
 				.setWhen(System.currentTimeMillis())
 				.setContentTitle(extras.getString("title"))
-				.setTicker(extras.getString("title"))
+				.setSubText("")
 				.setContentIntent(contentIntent)
 				.setAutoCancel(true);
-
-		String message = extras.getString("message");
+		 
+		 if(largeIcon != null){
+			 	Bitmap image = getBitmap(largeIcon);
+			 	if(image!=null){
+		            NotificationCompat.BigPictureStyle bigPicStyle = new NotificationCompat.BigPictureStyle();
+		            bigPicStyle.bigPicture(image);
+		            mBuilder.setStyle(bigPicStyle);
+			 	}
+		 }
+			
 		if (message != null) {
 			mBuilder.setContentText(message);
 		} else {
-			mBuilder.setContentText("<missing message content>");
+			mBuilder.setContentText("It has no content.");
 		}
-
 		String msgcnt = extras.getString("msgcnt");
 		if (msgcnt != null) {
 			mBuilder.setNumber(Integer.parseInt(msgcnt));
