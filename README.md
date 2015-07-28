@@ -675,8 +675,9 @@ For the above to work, make sure the content for your home page is wrapped in an
 </div>
 ```
 
-### windows8
-Sample usage is showed below. **Note**. To be able to receive toast notifications additional [toastCapable=’true’](http://msdn.microsoft.com/en-us/library/windows/apps/hh781238.aspx) attribute is required in manifest file.
+### windows
+Sample usage is showed below. **Note**. To be able to receive toast notifications additional [toastCapable=’true’](http://msdn.microsoft.com/en-us/library/windows/apps/hh781238.aspx) attribute is required in manifest file. Cordova-windows 4.0.0 release adds this property to config.xml. You can use:
+`<preference name="WindowsToastCapable" value="true" />` in config.xml. However, you will need Cordova 5.1.1 which pins Cordova-windows 4.0.0.
 
 ```js
 // fired when push notification is received
