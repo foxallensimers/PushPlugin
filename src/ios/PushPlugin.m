@@ -44,7 +44,7 @@
 }
 
 
-- (void)landingURL:(CDVInvokedUrlCommand*)command;
+- (void)openlandingPage:(CDVInvokedUrlCommand*)command;
 {
     //need to check nsuser default values for landing page.
     NSLog(@"In desired block......");
