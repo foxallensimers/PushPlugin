@@ -43,6 +43,17 @@
     [self successWithMessage:@"unregistered"];
 }
 
+
+- (void)openlandingPage:(CDVInvokedUrlCommand*)command;
+{
+    //need to check nsuser default values for landing page.
+    NSLog(@"In desired block......");
+    NSString *response = [NSString stringWithFormat:@"%@#saaksshi#%@",[[NSUserDefaults standardUserDefaults] objectForKey:@"landingPage_url"],[[NSUserDefaults standardUserDefaults] objectForKey:@"isURL"]];
+    self.callbackId = command.callbackId;
+    CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+}
+
 - (void)register:(CDVInvokedUrlCommand*)command;
 {
 	self.callbackId = command.callbackId;
@@ -198,29 +209,22 @@
 
 - (void)notificationReceived {
     NSLog(@"Notification received");
-
+    
     if (notificationMessage && self.callback)
+    
     {
-        NSMutableString *jsonStr = [NSMutableString stringWithString:@"{"];
-
-        [self parseDictionary:notificationMessage intoJSON:jsonStr];
-
-        if (isInline)
-        {
-            [jsonStr appendFormat:@"foreground:\"%d\"", 1];
-            isInline = NO;
-        }
-		else
-            [jsonStr appendFormat:@"foreground:\"%d\"", 0];
-
-        [jsonStr appendString:@"}"];
-
-        NSLog(@"Msg: %@", jsonStr);
-
-        NSString * jsCallBack = [NSString stringWithFormat:@"%@(%@);", self.callback, jsonStr];
-        [self.webView stringByEvaluatingJavaScriptFromString:jsCallBack];
-
+        //added by saaksshi
+        
+        NSString *landingPage = [NSString stringWithFormat:@"%@",notificationMessage[@"aps"][@"landingPage"]];
+        
+        [[NSUserDefaults standardUserDefaults] setObject:landingPage forKey:@"landingPage_url"];
+        
+        [[NSUserDefaults standardUserDefaults] setObject:@"true" forKey:@"isURL"];
+        
+        [[NSUserDefaults standardUserDefaults] synchronize];
+        
         self.notificationMessage = nil;
+        
     }
 }
 
