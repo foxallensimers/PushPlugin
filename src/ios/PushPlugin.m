@@ -213,16 +213,32 @@
     if (notificationMessage && self.callback)
     
     {
-        //added by saaksshi
-        
-        NSString *landingPage = [NSString stringWithFormat:@"%@",notificationMessage[@"aps"][@"landingPage"]];
-        
-        [[NSUserDefaults standardUserDefaults] setObject:landingPage forKey:@"landingPage_url"];
-        
-        [[NSUserDefaults standardUserDefaults] setObject:@"true" forKey:@"isURL"];
-        
-        [[NSUserDefaults standardUserDefaults] synchronize];
-        
+        NSMutableString *jsonStr = [NSMutableString stringWithString:@"{"];
+
+        [self parseDictionary:notificationMessage intoJSON:jsonStr];
+
+        if (isInline)
+        {
+            [jsonStr appendFormat:@"foreground:\"%d\"", 1];
+            isInline = NO;
+        }
+		else
+            [jsonStr appendFormat:@"foreground:\"%d\"", 0];
+
+        [jsonStr appendString:@"}"];
+
+        NSLog(@"Msg: %@", jsonStr);
+
+        NSString * jsCallBack = [NSString stringWithFormat:@"%@(%@);", self.callback, jsonStr];
+        if ([self.webView respondsToSelector:@selector(stringByEvaluatingJavaScriptFromString:)]) {
+            // Cordova-iOS pre-4
+            [self.webView performSelectorOnMainThread:@selector(stringByEvaluatingJavaScriptFromString:) withObject:jsCallBack waitUntilDone:NO];
+        } else {
+            // Cordova-iOS 4+
+            [self.webView performSelectorOnMainThread:@selector(evaluateJavaScript:completionHandler:) withObject:jsCallBack waitUntilDone:NO];
+        }
+        //[self.webView stringByEvaluatingJavaScriptFromString:jsCallBack];
+
         self.notificationMessage = nil;
         
     }
